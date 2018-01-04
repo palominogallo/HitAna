@@ -20,3 +20,4 @@ include_directories($ENV{JOYROOT_ROOT}/include)
 add_subdirectory(hitanalib)
 add_subdirectory(make_histos)
 
+install(FILES setup.sh DESTINATION .)
