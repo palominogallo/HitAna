@@ -1,7 +1,9 @@
 #include "hitana/HitAna.hh"
 std::vector<pair<int,float>> getGammasVec( std::vector<int> pi0idvec, HitAna *hitana);
 TVector3 getPairProPosition( int id,  HitAna *hitana );
-bool isFV( TVector3 vertex );
+bool isFV( TVector3 vertex, double fvcut );
+void fill1DHistos(TH1F *h[4], TString reaction, double value1 );
+void fill2DHistos(TH2F *h[4], TString reaction, double value1, double value2 );
 
 //=================================================================
 // Pi0Histos
@@ -11,17 +13,19 @@ int Pi0Histos( TString infile, TString outfile )
 {
 	// Create file to store histograms
 	TFile *rootfile = new TFile( outfile,"RECREATE");
-	TH1F *hvtx = new TH1F("hvtx","Vertex;X (cm)", 400,-2000, 2000);
-	TH1F *hvty = new TH1F("hvty","Vertex;Y (cm)", 400,-1500, 2500);
-	TH1F *hvtz = new TH1F("hvtz","Vertex;Z (cm)", 400, 9000,13000);
-	enum Color{ kAll, kRES, kQES, kDIS };
-	TString inter[4] = {"All","RES","QES","DIS"};
-	TH2F *hcont1[4];
-	TH2F *hcont2[4];
+	enum Color{ kAll, kRES, kDIS, kOTHER };
+	TString inter[4] = {"All","RES","DIS","OTHER"};
+	TH1F *hvtx = Utils1::bookTH1F("hvtx","X Vertex;X;Events / ; (cm)", 400,-2000, 2000);
+	TH1F *hvty = Utils1::bookTH1F("hvty","Y Vertex;Y;Events / ; (cm)", 400,-1500, 2500);
+	TH1F *hvtz = Utils1::bookTH1F("hvtz","Z Vertex;Z;Events / ; (cm)", 400, 9000,13000);
+	TH2F *hcont1[4], *hcont2[4];
+	TH1F *hener1[4], *hener2[4];
 	for ( int i = 0; i < 4; i++ )
 	{
-	 hcont1[i] = new TH2F(Form("hcont1%d",i),inter[i]+" - Containment > 0.;N^{0} rad len;Angle",100,0,20,90,0,180);
-	 hcont2[i] = new TH2F(Form("hcont2%d",i),inter[i]+" - Containment > 0.95;N^{0} rad len;Angle",100,0,20,90,0,180);
+		hcont1[i] = new TH2F(Form("hcont1%d",i),inter[i]+" - #scale[1.2]{#gamma} s leaving visible energy;N^{0} rad len;Angle btw. #scale[1.2]{#nu} and #scale[1.2]{#gamma}",100,0,20,90,0,180);
+		hcont2[i] = new TH2F(Form("hcont2%d",i),inter[i]+" - #scale[1.2]{#gamma} s with Containment > 0.95;N^{0} rad len;Angle btw. #scale[1.2]{#nu} and #scale[1.2]{#gamma}",100,0,20,90,0,180);
+ 		hener1[i] = Utils1::bookTH1F(Form("hener1%d",i),inter[i]+" - #scale[1.2]{#gamma}'s leaving visible energy;#scale[1.2]{#pi^{0}} Energy;Events / ; (MeV)", 400, 0, 2000);
+ 		hener2[i] = Utils1::bookTH1F(Form("hener2%d",i),inter[i]+" - #scale[1.2]{#gamma}'s with Containment > 0.95;#scale[1.2]{#pi^{0}} Energy;Events / ; (MeV)", 400, 0, 2000);
 	}
 
 	// TChain to retrieve data
@@ -39,9 +43,6 @@ int Pi0Histos( TString infile, TString outfile )
 
 	// Loop
 	for ( Int_t index = 0; index < nevents; index++)
-	//for ( Int_t index = 0; index < 20000; index++)
-	//for ( Int_t index = 38; index < 39; index++)
-	//for ( Int_t index = 0; index < 100; index++)
 	{
 		hitana->GetEntry(index);
 		if ( index % 10000 == 0 ) cout << " Running " << index << " events " << endl;
@@ -50,8 +51,7 @@ int Pi0Histos( TString infile, TString outfile )
 		hvtx->Fill( vertex.X() );
 		hvty->Fill( vertex.Y() );
 		hvtz->Fill( vertex.Z() );
-		if ( isFV( vertex ) ) continue;
-		//cout << " vtx X = " << vertex.X()  << " vtx Y = " << vertex.Y() << " vtx Z =  " << vertex.Z() << endl;
+		if ( isFV( vertex, 250 ) ) continue;
 
 		partstring.Clear();
 		pi0idvec.clear();
@@ -63,14 +63,12 @@ int Pi0Histos( TString infile, TString outfile )
 		}
 		
 		if ( !pi0idvec.size() )  continue;
-		//cout << "Entry = " << index << "; Reaction = " << hitana->Event->Primaries[0].Reaction << endl;
-		//cout << "  " << partstring.Data() << endl;
 		gammasvec = getGammasVec( pi0idvec, hitana );
 		for ( auto gamma: gammasvec )
 		{
 			Float_t totalE = 0, distance = 0;
 			
-			TVector3 pairpropos = getPairProPosition( gamma.first, hitana );	
+			TVector3 pairpropos = getPairProPosition( gamma.first, hitana );	 // PAIR PROduction POsition
 			TVector3 gammadirection = pairpropos - vertex;
 			gammadirection = gammadirection.Unit();
 
@@ -81,27 +79,17 @@ int Pi0Histos( TString infile, TString outfile )
 				float temp = (hit.Stop.Vect() - pairpropos).Dot(gammadirection);
 				if ( distance < temp ) distance = temp;
 			}
-			//cout << totalE/gamma.second << " " << distance << endl;
+
 			if ( totalE/gamma.second > 0.) 
 			{
 				angle = 180*beamdirection.Angle(gammadirection)/TMath::Pi();
-				hcont1[kAll]->Fill( distance/430, angle ); 
-				if ( reaction.Contains("QES;") ) 
-					hcont1[kQES]->Fill( distance/430, angle ); 
-				if ( reaction.Contains("RES;") ) 
-					hcont1[kRES]->Fill( distance/430, angle ); 
-				if ( reaction.Contains("DIS;") ) 
-					hcont1[kDIS]->Fill( distance/430, angle ); 
+				fill2DHistos( hcont1, reaction, distance/430, angle );
+				fill1DHistos( hener1, reaction, gamma.second );
 				
 				if ( totalE/gamma.second > 0.95 ) 
 				{
-					hcont2[kAll]->Fill(distance/430, angle);
-					if ( reaction.Contains("QES;") ) 
-						hcont2[kQES]->Fill( distance/430, angle ); 
-					if ( reaction.Contains("RES;") ) 
-						hcont2[kRES]->Fill( distance/430, angle ); 
-					if ( reaction.Contains("DIS;") ) 
-						hcont2[kDIS]->Fill( distance/430, angle ); 
+					fill2DHistos( hcont2, reaction, distance/430, angle );
+					fill1DHistos( hener2, reaction, gamma.second );	
 				}
 			}
 
@@ -115,6 +103,32 @@ int Pi0Histos( TString infile, TString outfile )
 
 }
 
+//=================================================================
+// fill1DHistos
+//=================================================================
+void fill1DHistos(TH1F *h[4], TString reaction, double value1 )
+{
+	h[0]->Fill( value1 );
+  if ( reaction.Contains("RES;") ) 			
+		h[1]->Fill( value1 );
+  else if ( reaction.Contains("DIS;") ) 
+		h[2]->Fill( value1 );
+  else 
+    h[3]->Fill( value1 );
+}
+//=================================================================
+// fill2DHistos
+//=================================================================
+void fill2DHistos(TH2F *h[4], TString reaction, double value1, double value2)
+{
+	h[0]->Fill( value1, value2 );
+  if ( reaction.Contains("RES;") ) 			
+		h[1]->Fill( value1, value2 );
+  else if ( reaction.Contains("DIS;") ) 
+		h[2]->Fill( value1, value2 );
+  else 
+    h[3]->Fill( value1, value2 );
+}
 //=================================================================
 // getGammaIdVec
 //=================================================================
@@ -154,14 +168,14 @@ TVector3 getPairProPosition( int id,  HitAna *hitana )
 //=================================================================
 // isFV
 //=================================================================
-bool isFV( TVector3 vertex )
+bool isFV( TVector3 vertex, double fvcut )
 {
-	if ( !(vertex.X() > -1200+430) ) return false;
-	if ( !(vertex.X() <  1200-430) ) return false;
-	if ( !(vertex.Y() > -680 +430) ) return false;
-	if ( !(vertex.Y() <  1720-430) ) return false;
-	if ( !(vertex.Z() >  9560+430) ) return false;
-	if ( !(vertex.Z() < 11560-430) ) return false;
+	if ( !(vertex.X() > -1200+fvcut) ) return false;
+	if ( !(vertex.X() <  1200-fvcut) ) return false;
+	if ( !(vertex.Y() > -680 +fvcut) ) return false;
+	if ( !(vertex.Y() <  1720-fvcut) ) return false;
+	if ( !(vertex.Z() >  9560+fvcut) ) return false;
+	if ( !(vertex.Z() < 11560-fvcut) ) return false;
 	return true;
 }
 //=================================================================

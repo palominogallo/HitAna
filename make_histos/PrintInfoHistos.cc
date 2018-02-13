@@ -1,10 +1,10 @@
-#include "HitAna.hh"
+#include "hitana/HitAna.hh"
 
 //=================================================================
-// InfoHistos
+// PrintInfoHistos
 //
 //=================================================================
-int InfoHistos( TString infile, Int_t start, Int_t end )
+int PrintInfoHistos( TString infile, Int_t start, Int_t end )
 {
 	// TChain to retrieve data
 	TChain *chitana = new TChain("EDepSimEvents");
@@ -22,22 +22,26 @@ int InfoHistos( TString infile, Int_t start, Int_t end )
 // Primaries
 		for ( auto vert: hitana->Event->Primaries )
 		{
+			//if ( !TString(vert.Reaction).Contains("nu:12") ) continue;
+			//if ( !TString(vert.Reaction).Contains("COH;") ) continue;
+			//if ( !TString(vert.Reaction).Contains("nu:14") ) continue;
+			//if ( !TString(vert.Reaction).Contains("NuEEL;") ) continue;
 			//cout << " Primaries = " << vert.Reaction << endl;
 			partstring.Clear();
 			for ( auto part: vert.Particles )
 			{		
 				partstring += part.Name + Form( ":%d:%.2f; ", part.TrackId,part.Momentum.E() );
 			}
-			if ( partstring.Contains("pi0") ) 
-			{
+//			if ( partstring.Contains("pi0") ) 
+//			{
 				cout << "Entry = " << index << "; Reaction = " << vert.Reaction << endl;
 				cout << "  " << partstring.Data() << endl;
-			}	
+//			}	
 
 		}		
 
 // Trajectories
-
+/*
 		for ( auto traj: hitana->Event->Trajectories )
 		{
 			cout << " Particle = " << traj.Name << " TrackId = " << traj.TrackId << " ParentId = ";
@@ -57,7 +61,7 @@ int InfoHistos( TString infile, Int_t start, Int_t end )
 				cout << " Contrib Id = " << hit.Contrib[0] <<  " Primary Id = " << hit.PrimaryId << endl;
 			}
 		}
-
+*/
 
 	}
 
@@ -88,7 +92,7 @@ int main(int argc, char **argv)
 
 	if ( argc == 1 ) showHelp( TString(argv[0]) );
 	int opt;
-	while ( ( opt = getopt( argc, argv, "i:s:e") ) != -1 )
+	while ( ( opt = getopt( argc, argv, "i:s:e:") ) != -1 )
 	{
 		switch(opt)
 		{
@@ -98,5 +102,6 @@ int main(int argc, char **argv)
 			default  : showHelp( argv[0] );
 		}
 	}
-	return InfoHistos( infile, start, end );
+	cout << infile << " "<< start << " " << end << endl;
+	return PrintInfoHistos( infile, start, end );
 }
