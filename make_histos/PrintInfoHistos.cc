@@ -1,4 +1,5 @@
 #include "hitana/HitAna.hh"
+#include <iostream>
 
 //=================================================================
 // PrintInfoHistos
@@ -11,17 +12,27 @@ int PrintInfoHistos( TString infile, Int_t start, Int_t end )
 	chitana->Add(infile);
 	HitAna *hitana = new HitAna( chitana );
 	Long64_t nevents = hitana->GetEntries();
-	TString partstring;
+	TString partstring, inpartstring;
 
 	// Loop
 	for ( Int_t index = start; index < end; index++)
 	{
 		hitana->GetEntry(index);
-		if ( index % 10000 == 0 ) cout << " Running " << index << " events " << endl;
 
 // Primaries
+		cout << hitana->Event->Primaries.size()  << endl;
 		for ( auto vert: hitana->Event->Primaries )
 		{
+			
+			for ( auto invert: vert.Informational )
+      {	
+				inpartstring.Clear();
+				for ( auto inpart: invert.Particles )
+				{
+        	inpartstring += inpart.Name + Form( ":%d:%.2f; ", inpart.TrackId,inpart.Momentum.E() );
+				}
+				cout << inpartstring.Data() << endl;
+      }
 			//if ( !TString(vert.Reaction).Contains("nu:12") ) continue;
 			//if ( !TString(vert.Reaction).Contains("COH;") ) continue;
 			//if ( !TString(vert.Reaction).Contains("nu:14") ) continue;
@@ -38,30 +49,41 @@ int PrintInfoHistos( TString infile, Int_t start, Int_t end )
 				cout << "  " << partstring.Data() << endl;
 //			}	
 
-		}		
+		}
+		
 
 // Trajectories
-/*
+#define PRINTINFO_TRAJECTORIES 
+#ifdef PRINTINFO_TRAJECTORIES
+		cout << endl << "** Printing Trajectories **" << endl;
 		for ( auto traj: hitana->Event->Trajectories )
 		{
-			cout << " Particle = " << traj.Name << " TrackId = " << traj.TrackId << " ParentId = ";
-      cout << traj.ParentId << " Process = " << traj.Points[0].Process << " E = ";
-      cout << traj.InitialMomentum.E() <<  " X = " << traj.Points[0].Position.X() << " Y = ";
-      cout << traj.Points[0].Position.Y() <<  " Z = " << traj.Points[0].Position.Z() << endl;
+			cout << " Part = " << setw(10) << traj.Name;
+			cout << "\t TrackId = " << setw(3) << traj.TrackId;
+			cout << "\t ParentId = " << setw(3) << traj.ParentId;
+			cout << "\t Process = " << setw(2) << traj.Points[0].Process;
+			cout << "\t E = " << setw(9) << Form( "%.2F", traj.InitialMomentum.E() );
+			//cout << "\t X = " << setw(10) << Form( "%.3F", traj.Points[0].Position.X() );
+			//cout << "\t Y = " << setw(10) << Form( "%.3F", traj.Points[0].Position.Y() );
+			//cout << "\t Z = " << setw(10) << Form( "%.3F", traj.Points[0].Position.Z() );
+			cout << endl;
 		}
-
+#endif
 
 // Segments
-
+#define PRINTINFO_SEGMENTS
+#ifdef PRINTINFO_SEGMENTS
+		cout << endl << "** Printing SegmentDetectors **" << endl;
 		for ( auto sd: hitana->Event->SegmentDetectors )
 		{
 			//cout << sd.first << endl;
 			for ( auto hit: sd.second )
 			{
-				cout << " Contrib Id = " << hit.Contrib[0] <<  " Primary Id = " << hit.PrimaryId << endl;
+				cout << " Contrib Id = " << hit.Contrib[0] <<  " Primary Id = " << hit.PrimaryId;
+				cout << " Energy deposit = " << hit.GetEnergyDeposit() << endl;
 			}
 		}
-*/
+#endif
 
 	}
 

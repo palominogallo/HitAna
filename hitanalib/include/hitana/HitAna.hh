@@ -1,7 +1,7 @@
 #ifndef HITANA_HH
 #define HITANA_HH
-#include <edep-sim/TG4Event.h>
-#include <edep-sim/TG4Trajectory.h>
+#include <EDepSim/TG4Event.h>
+#include <EDepSim/TG4Trajectory.h>
 #include <joyroot/Plot1.hh>
 #include <joyroot/Utils1.hh>
 
