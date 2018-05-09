@@ -15,17 +15,17 @@ int Pi0Histos( TString infile, TString outfile )
 	TFile *rootfile = new TFile( outfile,"RECREATE");
 	enum Color{ kAll, kRES, kDIS, kOTHER };
 	TString inter[4] = {"All","RES","DIS","OTHER"};
-	TH1F *hvtx = Utils1::bookTH1F("hvtx","X Vertex;X;Events / ; (cm)", 400,-2000, 2000);
-	TH1F *hvty = Utils1::bookTH1F("hvty","Y Vertex;Y;Events / ; (cm)", 400,-1500, 2500);
-	TH1F *hvtz = Utils1::bookTH1F("hvtz","Z Vertex;Z;Events / ; (cm)", 400, 9000,13000);
+	TH1F *hvtx = new TH1F("hvtx","X Vertex;X;Events / ; (cm)", 400,-2000, 2000);
+	TH1F *hvty = new TH1F("hvty","Y Vertex;Y;Events / ; (cm)", 400,-1500, 2500);
+	TH1F *hvtz = new TH1F("hvtz","Z Vertex;Z;Events / ; (cm)", 400, 9000,13000);
 	TH2F *hcont1[4], *hcont2[4];
 	TH1F *hener1[4], *hener2[4];
 	for ( int i = 0; i < 4; i++ )
 	{
 		hcont1[i] = new TH2F(Form("hcont1%d",i),inter[i]+" - #scale[1.2]{#gamma} s leaving visible energy;N^{0} rad len;Angle btw. #scale[1.2]{#nu} and #scale[1.2]{#gamma}",100,0,20,90,0,180);
 		hcont2[i] = new TH2F(Form("hcont2%d",i),inter[i]+" - #scale[1.2]{#gamma} s with Containment > 0.95;N^{0} rad len;Angle btw. #scale[1.2]{#nu} and #scale[1.2]{#gamma}",100,0,20,90,0,180);
- 		hener1[i] = Utils1::bookTH1F(Form("hener1%d",i),inter[i]+" - #scale[1.2]{#gamma}'s leaving visible energy;#scale[1.2]{#pi^{0}} Energy;Events / ; (MeV)", 400, 0, 2000);
- 		hener2[i] = Utils1::bookTH1F(Form("hener2%d",i),inter[i]+" - #scale[1.2]{#gamma}'s with Containment > 0.95;#scale[1.2]{#pi^{0}} Energy;Events / ; (MeV)", 400, 0, 2000);
+ 		hener1[i] = new TH1F(Form("hener1%d",i),inter[i]+" - #scale[1.2]{#gamma}'s leaving visible energy;#scale[1.2]{#pi^{0}} Energy;Events / ; (MeV)", 400, 0, 2000);
+ 		hener2[i] = new TH1F(Form("hener2%d",i),inter[i]+" - #scale[1.2]{#gamma}'s with Containment > 0.95;#scale[1.2]{#pi^{0}} Energy;Events / ; (MeV)", 400, 0, 2000);
 	}
 
 	// TChain to retrieve data

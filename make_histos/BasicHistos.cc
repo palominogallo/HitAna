@@ -8,7 +8,7 @@ int BasicHistos( TString infile, TString outfile )
 {
 	// Create file to store histograms
 	TFile *rootfile = new TFile( outfile,"RECREATE");
-	TH1F *htest = Utils1::bookTH1F( "htest", "Muons;Deposit Energy / Kinetic Energy;Events / ;units", 40, 0, 2, true);
+	TH1F *htest = new TH1F( "htest", "Muons;Deposit Energy / Kinetic Energy;Events / ;units", 40, 0, 2);
 
 	// TChain to retrieve data
 	TChain *chitana = new TChain("EDepSimEvents");

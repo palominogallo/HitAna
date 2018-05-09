@@ -2,8 +2,7 @@
 #define HITANA_HH
 #include <EDepSim/TG4Event.h>
 #include <EDepSim/TG4Trajectory.h>
-#include <joyroot/Plot1.hh>
-#include <joyroot/Utils1.hh>
+#include "ROOTinclude.hh"
 
 class HitAna
 {

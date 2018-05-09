@@ -9,7 +9,7 @@ message(STATUS " current source dir=${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_library(HITANA SHARED ${SOURCES})
 target_include_directories(HITANA PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(HITANA PUBLIC ${ROOT_LIBRARIES} TreePlayer edepsim_io JOYROOT)
+target_link_libraries(HITANA PUBLIC ${ROOT_LIBRARIES} TreePlayer edepsim_io)
 
 install(TARGETS HITANA DESTINATION lib)
 install(FILES ${HEADERS} DESTINATION include/hitana)
